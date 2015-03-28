@@ -1,0 +1,54 @@
+---
+# tasks file for ubuntu-base
+
+- name: Install Base Packages for enviroment
+  apt: name={{ item }} state=present
+  with_items:
+    - ubuntu-desktop
+    - build-essential
+    - tmux
+    - vim
+    - python-software-properties
+    - oracle-java8-installer
+    - git
+    - software-properties-common
+    - bzr
+    - subversion
+  tags:
+    - base
+
+- name: Install Ansible Repo
+  apt_repository: repo='ppa:ansible/ansible' state=present update_cache=yes
+  tags:
+    - ansible
+
+- name: Install Ansible
+  apt: name=ansible state=present
+  tags:
+    - ansible
+
+- name: Install Oracle Java Repo
+  apt_repository: repo='ppa:webupd8team/java' state=present update_cache=yes
+  tags:
+    - java
+
+- name:  Shell out a license acceptance for Java
+  shell: "echo oracle-java8-installer shared/accepted-oracle-license-v1-1 select true | sudo /usr/bin/debconf-set-selections"
+  tags:
+    - java
+
+- name: Make directory for FireFox/Google Plugins
+  file: state=directory path={{ item.path }}
+  with_items:
+    - { path: /usr/lib/mozilla/plugins }
+    - { path: /opt/google/chrome/plugins }
+  tags:
+    - java-applet
+
+- name: Symlink Java plugin to Firefox/Google plugin directories
+  file: state=link src={{ item.src }} dest={{ item.dest }}
+  with_items:
+    - { src: '/usr/lib/jvm/java-8-oracle/jre/lib/amd64/libnpjp2.so', dest: '/usr/lib/mozilla/plugins/libnpjp2.so'  }
+    - { src: '/usr/lib/jvm/java-8-oracle/jre/lib/amd64/libnpjp2.so', dest: '/opt/google/chrome/plugins/libnpjp2.so'  }
+  tags:
+    - java-applet
